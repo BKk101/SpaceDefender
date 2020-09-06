@@ -10,6 +10,14 @@
 #define ANGLE	PI/4.0
 #define G		9.81
 #define GREEN	0x0000FF00
+#define BLUE	0x000066FF
+#define RED		0x00FF0000
+#define WHITE	0xFFFFFFFF
+#define YELLOW	0x00888800
+#define MARGENTA 0x00aa00aa
+#define CYAN	0x0000FFFF
+
+int color[7]= {GREEN, BLUE, RED, YELLOW, MARGENTA, CYAN};
 typedef struct Object
 {
 	unsigned short color;
@@ -41,6 +49,7 @@ int render_next_frame(t_vars *vars)
 	if (vars->pause == 0) {
 		for (i=0;i<10;i++) {
 			vars->bullet[i].timer++;
+			if (vars->bullet[i].timer > 7) vars->bullet[i].pos_delt[1] = (double)rand()/RAND_MAX * 10 - 5;
 			if (vars->bullet[i].timer >= vars->bullet[i].speed_step) {
 				vars->bullet[i].timer = 0;
 				vars->bullet[i].pos_old[0] = vars->bullet[i].pos[0];
@@ -48,7 +57,7 @@ int render_next_frame(t_vars *vars)
 				vars->bullet[i].pos[0] = vars->bullet[i].pos[0] + vars->bullet[i].pos_delt[0] * vars->bullet[i].move_step;
 				vars->bullet[i].pos[1] = vars->bullet[i].pos[1] + vars->bullet[i].pos_delt[1] * vars->bullet[i].move_step; 
 		
-				mlx_pixel_put(vars->mlx,vars->win,vars->bullet[i].pos_old[0],vars->bullet[i].pos_old[1],0x00000000);
+				//mlx_pixel_put(vars->mlx,vars->win,vars->bullet[i].pos_old[0],vars->bullet[i].pos_old[1],0x00000000);
 				mlx_pixel_put(vars->mlx,vars->win,vars->bullet[i].pos[0],vars->bullet[i].pos[1],vars->bullet[i].color);
 			}
 		}
@@ -73,7 +82,7 @@ void make_bullet(t_vars *vars)
 {
 	int i;
 	for (i=0;i<10;i++) {
-		vars->bullet[i].color = GREEN;
+		vars->bullet[i].color = color[i%6];
 		vars->bullet[i].pos[0] = i/5 ? 320:0;
 		vars->bullet[i].pos[1] = rand() % 200;
 		vars->bullet[i].pos_delt[0] = i/5 ? -1 : 1;
@@ -97,6 +106,7 @@ int main(void)
 	vars.win = mlx_new_window(vars.mlx,WIDTH,HEIGHT,"new");
 	vars.time = 0;
 	vars.pause = 0;
+	vars.img = mlx_new_image(vars.mlx, WIDTH, HEIGHT);
 	make_bullet(&vars);
 	mlx_hook(vars.win, 2, 0, keyboard, &vars);
 	mlx_loop_hook(vars.mlx, render_next_frame, &vars);
