@@ -101,5 +101,6 @@ int main(void)
 	mlx_hook(vars.win, 2, 0, keyboard, &vars);
 	mlx_loop_hook(vars.mlx, render_next_frame, &vars);
 	mlx_loop(vars.mlx);
+	//a
 	return 0;
 }	
