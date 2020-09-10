@@ -65,6 +65,7 @@ int RTC_Get_Time(void)
 #include "./Image/pow.h"
 
 const unsigned short * expld[] = {expld1, expld2, expld3};
+const unsigned short * enemy_img[] = {enemy1,enemy2};
 
 /* 5:5:5:I Color Definition */
 
@@ -117,7 +118,7 @@ void Draw_Player();
 int Check_Range(int x, int y, int idx, int range);
 void Enemy_init(int time);
 void Move_func(Obj obj[], int *obj_num);
-void Draw_func(Obj obj[], int *obj_num);
+void Draw_func(Obj obj[], int *obj_num, char c);
 int Get_idx(int x, int y, Obj obj[]);
 void Lcd_Draw_BMP2(int x, int y, const unsigned short int *fp);
 void Check_crush();
@@ -137,8 +138,6 @@ int bul_num_e;
 int item_num;
 int Pos_x[5], Pos_y[5];;
 int last_pos;
-Img enemy_img[4] = {{enemy1, 0x0b,0x0d}, {enemy2, 0x0b, 0x0e}};
-
 
 /*
 	Uart_Printf("bul num %d\n", bul_num_p);
@@ -155,14 +154,13 @@ void User_Main(void)
 	Timer0_Repeat(10);
 	srand(RTC_Get_Time());
 	Lcd_Draw_Bar(0,0,WIDTH,20,0x6319);
-	//Lcd_Clr_Screen(0x6319);
 	Player_init();
 	zz = space2[1] - 220;
 	for (;;)
 	{
 		Pos_x[0] = player.pos[0]; Pos_y[0] = player.pos[1] - SIZE_Y / 2 - 3;
-		Pos_x[1] = player.pos[0] - 10; Pos_y[1] = player.pos[1] - SIZE_Y / 2 - 3;;
-		Pos_x[2] = player.pos[0] + 10; Pos_y[2] = player.pos[1] - SIZE_Y / 2 - 3;;
+		Pos_x[1] = player.pos[0] - 10; Pos_y[1] = player.pos[1] - SIZE_Y / 2 - 3;
+		Pos_x[2] = player.pos[0] + 10; Pos_y[2] = player.pos[1] - SIZE_Y / 2 - 3;
 		if (Key_Get_Pressed() == 5) player.pow = 3;
 		if (Timer0_Check_Expired()) {
 			if (time == 0xFFFFFFFF) time = 0;
@@ -174,7 +172,6 @@ void User_Main(void)
 			Enemy_init(time);
 			Bullet_init(time);
 			Item_init(time);
-			Uart_Printf("enem %d bull %d item %d\n", enem_num, bul_num_p,item_num);
 			Check_crush();
 			Move_player();
 			Move_Obj();
@@ -205,17 +202,17 @@ void Enemy_init(int time)
 {
 	int i,pos,temp;
 
-	if (time % 50 == 0) { //한번에 만드는 갯수 제한
+	if (time % 70 == 0) { //한번에 만드는 갯수 제한
 		if (enem_num < 5) enem_num++;
 		for (i = 0; i < enem_num; i++) {
 			if (enem[i].flag == 0) {
-				temp = rand()%2;
+				temp = (rand()%10 > 5) ? 1:0;
 				enem[i].flag = 1;
 				enem[i].idx = 3;
 				enem[i].move_flag = 1;
-				enem[i].size[0] = enemy_img[temp].wid; enem[i].size[1] = enemy_img[temp].hei;
-				enem[i].fp = enemy_img[temp].fp;
-				while (abs((pos = rand()%280 + 20) - last_pos) < 50);
+				enem[i].fp = enemy_img[temp];
+				Lcd_Get_Info_BMP(&enem[i].size[0], &enem[i].size[1], enem[i].fp);
+				while (abs((pos = rand()%280 + 20) - last_pos) < 80);
 				enem[i].pos[0] = pos; enem[i].pos[1] = 15;
 				enem[i].delta[0] = 0; enem[i].delta[1] = 5;
 				enem[i].speed = 5;
@@ -233,7 +230,7 @@ void Bullet_init(int time)
 {
 	int i,j;
 
-	if (time % 30 == 0) { //한번에 만드는 갯수 제한
+	if (time % 40 == 0) { //적 총알
 		for (j=0;j<enem_num;j++) {
 			if (bul_num_e < 50) bul_num_e++;
 			for (i = 0; i < bul_num_e; i++) {
@@ -241,11 +238,11 @@ void Bullet_init(int time)
 					bullet_e[i].flag = 1;
 					bullet_e[i].idx = 4;
 					bullet_e[i].move_flag = 1;
-					bullet_e[i].size[0] = (int)bul02[0]; bullet_e[i].size[1] = (int)bul02[1];
 					bullet_e[i].fp = bul02;
+					Lcd_Get_Info_BMP(&bullet_e[i].size[0], &bullet_e[i].size[1], bullet_e[i].fp);
 					bullet_e[i].pos[0] = enem[j].pos[0]; bullet_e[i].pos[1] = enem[j].pos[1] + enem[j].size[1]/2 + 5;
 					bullet_e[i].delta[0] = 0; bullet_e[i].delta[1] = 12;
-					bullet_e[i].speed = 5;
+					bullet_e[i].speed = 2;
 					bullet_e[i].time = 0;
 					bullet_e[i].hit = 0;
 					Write_func(bullet_e[i]);
@@ -254,7 +251,7 @@ void Bullet_init(int time)
 			}
 		}
 	}
-	if (time % 10 == 0) { //한번에 만드는 갯수 제한
+	if (time % 10 == 0 && player.flag == 1) { //플레이어 총알
 		if (bul_num_p < 20) bul_num_p+=player.pow;
 		j = player.pow-1;
 		for (i = 0; i < bul_num_p; i++) {
@@ -262,11 +259,12 @@ void Bullet_init(int time)
 				bullet_p[i].flag = 1;
 				bullet_p[i].idx = 2;
 				bullet_p[i].move_flag = 1;
-				bullet_p[i].size[0] = (int)bul01[0]; bullet_p[i].size[1] = (int)bul01[1];
-				bullet_e[i].fp = bul01;
+				bullet_p[i].fp = bul01;
+				Lcd_Get_Info_BMP(&bullet_p[i].size[0], &bullet_p[i].size[1], bullet_p[i].fp);
 				bullet_p[i].pos[0] = Pos_x[j]; bullet_p[i].pos[1] = Pos_y[j];
-				bullet_p[i].delta[0] = 0; bullet_p[i].delta[1] = -15;
-				bullet_p[i].speed = 3;
+				bullet_p[i].delta[0] = j == 0 ? 0 : (j%2 ? -3 : 3);
+				bullet_p[i].delta[1] = -15;
+				bullet_p[i].speed = 1;
 				bullet_p[i].time = 0;
 				bullet_p[i].hit = 0;
 				Write_func(bullet_p[i]);
@@ -279,22 +277,23 @@ void Bullet_init(int time)
 
 void Item_init(int time)
 {
-	int i,j;
+	int i;
 
-	if (time % 100 == 0) {
+	if (time % 50 == 0) {
 		if (item_num < 10) item_num++;
 		for (i=0;i<item_num;i++) {
 			if (item[i].flag == 0) {
 				item[i].flag = 1;
 				item[i].idx = 5;
 				item[i].move_flag = 1;
-				item[i].size[0] = (int)pow[0]; item[i].size[1] = (int)pow[1];
+				item[i].fp = pow;
+				Lcd_Get_Info_BMP(&item[i].size[0], &item[i].size[1], item[i].fp);
+				Uart_Printf("%d %d\n", item[i].size[0], item[i].size[1]);
 				item[i].pos[0] = rand()%280+20; item[i].pos[1] = 10;
-				item[i].delta[0] = rand()%10-5; item[i].delta[1] = 10;
+				item[i].delta[0] = 0; item[i].delta[1] = 10;
 				item[i].speed = 10;
 				item[i].time = 0;
 				item[i].hit = 0;
-				enem[i].fp = pow;
 				Write_func(item[i]);
 			}
 		}
@@ -332,33 +331,62 @@ void Draw_BackGround(int z, int a, int x, int y, const unsigned short int *fp)
 
 void Draw_Player(void)
 {
-	//if (player.hit == 1)
+	int i;
+	static int time = 0;
+
+	Lcd_Set_Shape_Mode(1, BGC);
 	if (player.flag == 1) {
-		Lcd_Set_Shape_Mode(1, BGC);
 		Lcd_Draw_BMP2(player.pos[0] - SIZE_X/2, player.pos[1] - SIZE_Y/2, PLANE);
-		Lcd_Set_Shape_Mode(0,0);
 		player.move_flag = 0;
 	}
+	else {
+		++time;
+		Lcd_Draw_BMP2(player.pos[0] - SIZE_X/2, player.pos[1] - SIZE_Y/2, PLANE);
+		for (i=0;i<3;i++) Lcd_Draw_BMP2(player.pos[0]-15, player.pos[1]-15, expld[i]);
+		for (i=0;i<3;i++) Lcd_Draw_BMP2(player.pos[0]+5, player.pos[1]+5, expld[i]);
+		Clear_func(player);
+		if (time > 15) {
+			time = 0;
+			Player_init();
+		}
+	}
+	Lcd_Set_Shape_Mode(0,0);
 }
 
 void Draw_Obj(void)
 {
 	Lcd_Set_Shape_Mode(1, BGC);
-	Draw_func(bullet_p, &bul_num_p);
-	Draw_func(bullet_e, &bul_num_e);
-	Draw_func(item, &item_num);
-	Draw_func(enem, &enem_num);
+	Draw_func(bullet_p, &bul_num_p, 'b');
+	Draw_func(bullet_e, &bul_num_e, 'b');
+	Draw_func(item, &item_num, 'i');
+	Draw_func(enem, &enem_num, 'e');
 	Lcd_Set_Shape_Mode(0, 0);
 }
 
-void Draw_func(Obj obj[], int *obj_num)
+void Draw_func(Obj obj[], int *obj_num, char c)
 {
 	int i,j;
+	static int time = 0;
 
 	for (i=0;i<(*obj_num);i++) {
 		if (obj[i].hit == 1) {
-			for (j=0;j<3;j++) Lcd_Draw_BMP2(obj[i].pos[0]-7, obj[i].pos[1]-7, expld[j]);
-			obj[i].hit = 0;
+			Clear_func(obj[i]);
+			if (c == 'e') {
+				++time;
+				for (j=0;j<3;j++) Lcd_Draw_BMP2(obj[i].pos[0]-7, obj[i].pos[1]-7, expld[j]);
+				if (time > 5) {
+					time = 0;
+					(*obj_num)--;
+					obj[i].flag = 0;
+					obj[i].hit = 0;
+
+				}
+			}
+			else {
+				(*obj_num)--;
+				obj[i].flag = 0;
+				obj[i].hit = 0;
+			}
 		}
 		if ((obj[i].flag == 1) && (obj[i].move_flag == 1)) {
 			obj[i].move_flag = 0;
@@ -380,12 +408,7 @@ void Move_func(Obj obj[], int *obj_num)
 	int i;
 
 	for (i = 0; i < (*obj_num); i++) {
-		if (obj[i].hit == 1) {
-			(*obj_num)--;
-			obj[i].flag = 0;
-			Clear_func(obj[i]);
-		}
-		if ((obj[i].flag == 1) && obj[i].time >= obj[i].speed) {
+		if (obj[i].time >= obj[i].speed && (obj[i].flag == 1) && (obj[i].hit == 0)) {
 			Clear_func(obj[i]);
 			obj[i].pos_old[0] = obj[i].pos[0]; obj[i].pos_old[1] = obj[i].pos[1];
 			obj[i].pos[0] += obj[i].delta[0]; obj[i].pos[1] += obj[i].delta[1];
@@ -406,11 +429,11 @@ void Move_player()
 {
 	int key;
 
-/*	if (player.hit == 1) {
+	if (player.hit == 1) {
 		player.flag = 0;
 		return ;
 	}
-*/	key = Key_Get_Pressed();
+	key = Key_Get_Pressed();
 	if (key) {
 		player.move_flag = 1;
 		player.pos_old[0] = player.pos[0]; player.pos_old[1] = player.pos[1];
@@ -484,17 +507,21 @@ void Check_crush()
 			bullet_e[i].hit = 1;
 		}
 	}
-	for (i=0;i<item_num;i++) {
-		if (Check_Range(item[i].pos[0], item[i].pos[1], player.idx, 5)) {
+	for (i=0;i<enem_num;i++) {
+		if (Check_Range(enem[i].pos[0], enem[i].pos[1], 2, 8)) {
+			idx = Get_idx(enem[i].pos[0], enem[i].pos[1], bullet_p);
+			bullet_p[idx].hit = 1;
+			enem[i].hit = 1;
+		}
+		if (Check_Range(enem[i].pos[0], enem[i].pos[1], 1, 8)) {
 			player.hit = 1;
-			item[i].hit = 1;
+			enem[i].hit = 1;
 		}
 	}
-	for (i=0;i<bul_num_p;i++) {
-		if (Check_Range(bullet_p[i].pos[0], bullet_p[i].pos[1], 3, 4)) {
-			idx = Get_idx(bullet_p[i].pos[0], bullet_p[i].pos[1], enem);
-			enem[idx].hit = 1;
-			bullet_p[i].hit = 1;
+	for (i=0;i<item_num;i++) {
+		if (Check_Range(item[i].pos[0], item[i].pos[1], player.idx, 10)) {
+			player.pow = 3;
+			item[i].hit = 1;
 		}
 	}
 }
