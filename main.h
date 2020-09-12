@@ -43,7 +43,7 @@ typedef struct obj
 	const unsigned short int *fp;
 }Obj;
 
-void Draw_BackGround(int z, int a, int x, int y, const unsigned short int *fp);
+void Draw_BackGround(int a, int z, int x, int y, const unsigned short int *fp);
 void Lcd_Draw_BMP2(int x, int y, const unsigned short int *fp);
 
 void Opening();
@@ -70,9 +70,11 @@ void Move_obj();
 void Move_func(Obj obj[], int *obj_num);
 void Write_func(Obj obj);
 void Clear_func(Obj obj);
+void Erase_obj(Obj obj, int z);
 
 void Check_crush();
 void Player_hit();
+void Player_crush(Obj obj, int range);
 int Check_Range(int x, int y, int range, Obj *obj, int num);
 
 extern const unsigned short heart[];
@@ -99,6 +101,6 @@ extern int last_pos;
 extern int Item_Lock;
 extern int Pos_x[5], Pos_y[5];
 extern int Pos2_x[5], Pos2_y[5];
-
+extern int zzz;
 
 #endif /* MAIN_H_ */

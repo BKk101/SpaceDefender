@@ -26,6 +26,7 @@ void Move_player()
 			if (player.pos[1] + player.size[1]/2 + player.delta[1] < HEIGHT) player.pos[1] += player.delta[1];
 		}
 		Write_func(player);
+		Erase_obj(player, zzz);//수정
 	}
 }
 
@@ -70,8 +71,9 @@ void Move_func(Obj obj[], int *obj_num)
 
 	for (i = 0; i < (*obj_num); i++) {
 		if (obj[i].time >= obj[i].speed && (obj[i].flag == 1) && (obj[i].hit == 0)) {
-			Clear_func(obj[i]);
 			obj[i].pos_old[0] = obj[i].pos[0]; obj[i].pos_old[1] = obj[i].pos[1];
+			Erase_obj(player, zzz);
+			Clear_func(obj[i]);
 			obj[i].pos[0] += obj[i].delta[0]; obj[i].pos[1] += obj[i].delta[1];
 			if ((obj[i].pos[0] < 0 || obj[i].pos[0] >= WIDTH) || (obj[i].pos[1] < 20 || obj[i].pos[1] >= HEIGHT)) {
 				//y경계값 적 생성위치에 따라 문제될 수 있음

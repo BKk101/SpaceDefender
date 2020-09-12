@@ -18,7 +18,7 @@ const unsigned short * enemy_img[] = {enemy1d,enemy2d};
 
 void Opening()
 {
-	int i,j,zz;
+	int zz;
 
 	zz = space2[1] - 240;
 	Lcd_Clr_Screen(BLACK);
@@ -59,17 +59,6 @@ void Ending(int n)
 	while(Key_Get_Pressed() != 6);
 }
 
-void Time_inc()
-{
-	int i;
-
-	if (boss.flag == 1) boss.time++;
-	for (i=0;i<bul_num_p;i++) bullet_p[i].time++;
-	for (i=0;i<bul_num_e;i++) bullet_e[i].time++;
-	for (i=0;i<bul_num_b;i++) bullet_b[i].time++;
-	for (i=0;i<enem_num;i++) enem[i].time++;
-	for (i=0;i<item_num;i++) item[i].time++;
-}
 void Var_init()
 {
 	memset(map,0,sizeof(map));
@@ -85,7 +74,6 @@ void Var_init()
 	item_num =  0;
 	enem_num = 0;
 	Life = 10;
-	Timer0_Repeat(20);
 	srand(RTC_Get_Time());
 	Lcd_Draw_Bar(0,0,WIDTH,20,0x1);
 }
@@ -103,11 +91,24 @@ void Pos_init()
 	Pos2_x[4] = boss.pos[0] + boss.size[0]/2 +5; Pos2_y[4] = boss.pos[1] + 7;
 }
 
+void Time_inc()
+{
+	int i;
+
+	if (boss.flag == 1) boss.time++;
+	for (i=0;i<bul_num_p;i++) bullet_p[i].time++;
+	for (i=0;i<bul_num_e;i++) bullet_e[i].time++;
+	for (i=0;i<bul_num_b;i++) bullet_b[i].time++;
+	for (i=0;i<enem_num;i++) enem[i].time++;
+	for (i=0;i<item_num;i++) item[i].time++;
+}
+
 void Player_init()
 {
 	player.flag = 1;
 	player.idx = 1;
 	player.pos[0] = START_X; player.pos[1] = START_Y;
+	player.pos_old[0] = START_X; player.pos_old[1] = START_Y;
 	player.fp = PLANE;
 	Lcd_Get_Info_BMP(&player.size[0], &player.size[1], player.fp);
 	player.delta[0] = 10; player.delta[1] = 10;
@@ -154,7 +155,7 @@ void Enemy_init(int time)
 				while (abs((pos = rand()%280 + 20) - last_pos) < 80);
 				enem[i].pos[0] = pos; enem[i].pos[1] = 15;
 				enem[i].delta[0] = 0; enem[i].delta[1] = 5;
-				enem[i].speed = 4;
+				enem[i].speed = 2;
 				enem[i].time = 0;
 				enem[i].hit = 0;
 				last_pos = enem[i].pos[0];
@@ -189,7 +190,7 @@ void Bullet_init(int time)
 			}
 		}
 	}
-	if (time % 8 == 0 && player.flag == 1) { //플레이어 총알
+	if (time % 10 == 0 && player.flag == 1) { //플레이어 총알
 		if (bul_num_p < 20) bul_num_p+=player.pow;
 		j = player.pow-1;
 		for (i = 0; i < bul_num_p; i++) {

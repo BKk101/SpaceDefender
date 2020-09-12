@@ -73,7 +73,7 @@ int last_pos;
 int Item_Lock;
 int Pos_x[5], Pos_y[5];
 int Pos2_x[5], Pos2_y[5];
-
+int zzz;
 /*
 	Uart_Printf("bul num %d\n", bul_num_p);
 				for (i=0;i<bul_num_p;i++) {
@@ -91,14 +91,15 @@ Start_P:
 	Opening();
 	Var_init();
 	Player_init();
+	Timer0_Repeat(20);
 	time = 0;
 	zz = space2[1] - 220;
 	for (;;)
 	{
+		zzz = zz;
 		Pos_init();
 		if (Life <= 0) {Ending(0); goto Start_P;}
 		if (boss.flag == 1 && boss.life < 1) {Ending(1); goto Start_P;}
-		//if (Key_Get_Pressed() == 5) player.pow = 3;
 		if (Timer0_Check_Expired()) {
 			if (time == 0xFFFFFFFF) time = 0;
 			time++;
@@ -108,13 +109,13 @@ Start_P:
 			Bullet_init(time);
 			Item_init(time);
 			Check_crush();
-			Move_player();
+			Move_player(zz);
 			Move_boss(time);
 			Move_obj();
 		}
 		Draw_obj();
 		Draw_boss();
-		Draw_player();
+		Draw_player(zz);
 		Draw_BackGround(0,zz,0,20,space2);
 		if (zz > 0) zz--;
 		if (zz <= 0) zz = space2[1] - 220;
@@ -126,42 +127,22 @@ void Check_crush()
 	int i,idx;
 
 	if (boss.flag == 1) {
-		idx = Check_Range(boss.pos[0], boss.pos[1], boss.size[1]/2 + 5, bullet_p, bul_num_p);
+		idx = Check_Range(boss.pos[0], boss.pos[1], boss.size[1]/2 + 5, bullet_p, bul_num_p); //플레이어 총알이 보스에 맞았는지 확인
 		if (idx != -1) {
 			boss.hit = 1;
 			bullet_p[idx].hit = 1;
 		}
-		idx = Check_Range(boss.pos[0], boss.pos[1], boss.size[1]/2 + 3, &player, 1);
-		if (idx != -1) {
-			boss.hit = 1;
-			Player_hit();
-		}
+		Player_crush(boss, 3);
 	}
-	for (i=0;i<bul_num_e;i++) { //적총알이 플레이어에 맞았는지 확인
-		idx = Check_Range(bullet_e[i].pos[0], bullet_e[i].pos[1], bullet_e[i].size[1]/2 + 2, &player, 1);
-		if (idx != -1) {
-			bullet_e[i].hit = 1;
-			Player_hit();
-		}
-	}
-	for (i=0;i<bul_num_b;i++) {
-		idx = Check_Range(bullet_b[i].pos[0], bullet_b[i].pos[1], bullet_b[i].size[1]/2 + 2, &player, 1);
-		if (idx != -1) {
-			bullet_b[i].hit = 1;
-			Player_hit();
-		}
-	}
+	for (i=0;i<bul_num_e;i++) Player_crush(bullet_e[i], 2); //적총알이 플레이어에 맞았는지 확인
+	for (i=0;i<bul_num_b;i++) Player_crush(bullet_b[i], 2); //보스 총알이 플레이어에 맞았는지 확인
 	for (i=0;i<enem_num;i++) { //적이 플레이어 총알이나 본체에 맞았는지 확인
 		idx = Check_Range(enem[i].pos[0], enem[i].pos[1], enem[i].size[1]/2 + 6, bullet_p, bul_num_p);
 		if (idx != -1) {
 			enem[i].hit = 1;
 			bullet_p[idx].hit = 1;
 		}
-		idx = Check_Range(enem[i].pos[0], enem[i].pos[1], enem[i].size[1]/2 + 3, &player, 1);
-		if (idx != -1) {
-			enem[i].hit = 1;
-			Player_hit();
-		}
+		Player_crush(enem[i], 3);
 	}
 	for (i=0;i<item_num;i++) { //아이템이 플레이어에 맞았는지 확인
 		idx = Check_Range(item[i].pos[0], item[i].pos[1], item[i].size[1]/2 + 5, &player, 1);
@@ -173,6 +154,17 @@ void Check_crush()
 				if (Life < 6) Life++;
 			Item_Lock = 1;
 		}
+	}
+}
+
+void Player_crush(Obj obj, int range)
+{
+	int idx;
+
+	idx = Check_Range(obj.pos[0], obj.pos[1], obj.size[1]/2 + range, &player, 1);
+	if (idx != -1) {
+		obj.hit = 1;
+		Player_hit();
 	}
 }
 
@@ -201,3 +193,4 @@ void Player_hit()
 	Lcd_Draw_Bar(0,0,WIDTH,20,0x1);
 	if (Life > 0 && player.flag == 1) Life--;
 };
+

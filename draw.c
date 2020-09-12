@@ -12,8 +12,19 @@ void Lcd_Draw_BMP2(int x, int y, const unsigned short int *fp)
 		}
 	}
 }
+void Erase_obj(Obj obj, int z)
+{
+	int xx, yy;
 
-void Draw_BackGround(int z, int a, int x, int y, const unsigned short int *fp)
+	for (yy = obj.pos_old[1]-obj.size[1]/2; yy <= obj.pos_old[1]+obj.size[1]/2; yy++) {
+		for (xx = obj.pos_old[0]-obj.size[0]/2; xx <= obj.pos_old[0]+obj.size[0]/2; xx++) {
+			if (map[yy][xx] == 0)
+				Lcd_Put_Pixel(xx, yy, (int)space2[(z + yy)*320 + (xx) + 2]);
+		}
+	}
+}
+
+void Draw_BackGround(int a, int z, int x, int y, const unsigned short int *fp)
 {
 	register int width = fp[0]; //height = fp[1];
 	register int xx, yy;
@@ -22,12 +33,12 @@ void Draw_BackGround(int z, int a, int x, int y, const unsigned short int *fp)
 		for (xx = 0; xx < width; xx++) {
 			if (xx+x<0 || xx+x>=WIDTH || yy+y<0 || yy+y>=HEIGHT) continue;
 			if (map[yy+y][xx+x] == 0)
-				Lcd_Put_Pixel(xx + x, yy + y, (int)fp[(a + yy)*width + (xx + z) + 2]);
+				Lcd_Put_Pixel(xx + x, yy + y, (int)fp[(z + yy)*width + (xx + a) + 2]);
 		}
 	}
 }
 
-void Draw_player(void)
+void Draw_player()
 {
 	int i;
 	static int time = 0;
@@ -44,7 +55,7 @@ void Draw_player(void)
 		for (i=0;i<3;i++) Lcd_Draw_BMP2(player.pos[0]-15, player.pos[1]-15, expld[i]);
 		for (i=0;i<3;i++) Lcd_Draw_BMP2(player.pos[0]+5, player.pos[1]+5, expld[i]);
 		Clear_func(player); //깜빡임 표현
-		if (time > 12) {
+		if (time > 8) {
 			time = 0;
 			Player_init();
 		}
