@@ -73,7 +73,8 @@ void Var_init()
 	bul_num_p = 0;
 	item_num =  0;
 	enem_num = 0;
-	Life = 10;
+	Boss_flag = 0;
+	Life = 3;
 	srand(RTC_Get_Time());
 	Lcd_Draw_Bar(0,0,WIDTH,20,0x1);
 }
@@ -85,8 +86,8 @@ void Pos_init()
 	Pos_x[2] = player.pos[0] + 10; Pos_y[2] = player.pos[1] - player.size[1]/2 - (int)bul01[1]/2 - 5;
 
 	Pos2_x[0] = boss.pos[0]; Pos2_y[0] = boss.pos[1] + boss.size[1]/2 + 7;
-	Pos2_x[1] = boss.pos[0] -10; Pos2_y[1] = boss.pos[1] + boss.size[1]/2 + 7;
-	Pos2_x[2] = boss.pos[0] +10; Pos2_y[2] = boss.pos[1] + boss.size[1]/2 + 7;
+	Pos2_x[1] = boss.pos[0] -10; Pos2_y[1] = boss.pos[1] + boss.size[1]/2 + 2;
+	Pos2_x[2] = boss.pos[0] +10; Pos2_y[2] = boss.pos[1] + boss.size[1]/2 + 2;
 	Pos2_x[3] = boss.pos[0] - boss.size[0]/2 -5; Pos2_y[3] = boss.pos[1] + 7;
 	Pos2_x[4] = boss.pos[0] + boss.size[0]/2 +5; Pos2_y[4] = boss.pos[1] + 7;
 }
@@ -108,7 +109,7 @@ void Player_init()
 	player.flag = 1;
 	player.idx = 1;
 	player.pos[0] = START_X; player.pos[1] = START_Y;
-	player.pos_old[0] = START_X; player.pos_old[1] = START_Y;
+	player.pos_old[0] = player.pos[0]; player.pos_old[1] = player.pos[1];
 	player.fp = PLANE;
 	Lcd_Get_Info_BMP(&player.size[0], &player.size[1], player.fp);
 	player.delta[0] = 10; player.delta[1] = 10;
@@ -120,20 +121,21 @@ void Player_init()
 
 void Boss_init(int time)
 {
-	if (time > 300 && boss.flag == 0) {
+	if (time > 600 && boss.flag == 0) {
 		boss.flag = 1;
 		boss.idx = 9;
 		boss.pos[0] = START_X; boss.pos[1] = 0;
 		boss.fp = boss1;
 		Lcd_Get_Info_BMP(&boss.size[0], &boss.size[1], boss.fp);
-		boss.delta[0] = 10; boss.delta[1] = 10;
+		boss.delta[0] = 10; boss.delta[1] = 15;
 		boss.move_flag = 1;
 		boss.time = 0;
-		boss.speed = 5;
+		boss.speed = 3;
 		boss.hit = 0;
 		boss.pow = 1;
 		boss.life = 50;
 		boss.pow = 3;
+		freq_b = 50;
 		Write_func(boss);
 	}
 }
@@ -142,7 +144,7 @@ void Enemy_init(int time)
 {
 	int i,pos,temp;
 
-	if (time < 200 && time % 50 == 0) {
+	if (time < 550 && time % 30 == 0) {
 		if (enem_num < 10) enem_num++; //
 		for (i = 0; i < enem_num; i++) {
 			if (enem[i].flag == 0) {
@@ -155,7 +157,7 @@ void Enemy_init(int time)
 				while (abs((pos = rand()%280 + 20) - last_pos) < 80);
 				enem[i].pos[0] = pos; enem[i].pos[1] = 15;
 				enem[i].delta[0] = 0; enem[i].delta[1] = 5;
-				enem[i].speed = 2;
+				enem[i].speed = 3;
 				enem[i].time = 0;
 				enem[i].hit = 0;
 				last_pos = enem[i].pos[0];
@@ -169,27 +171,6 @@ void Bullet_init(int time)
 {
 	int i,j;
 
-	if (time % 70 == 0) { //적 총알
-		for (j=0;j<enem_num;j++) {
-			if (bul_num_e < 50) bul_num_e++;
-			for (i = 0; i < bul_num_e; i++) {
-				if (bullet_e[i].flag == 0) {
-					bullet_e[i].flag = 1;
-					bullet_e[i].idx = 4;
-					bullet_e[i].move_flag = 1;
-					bullet_e[i].fp = bul02;
-					Lcd_Get_Info_BMP(&bullet_e[i].size[0], &bullet_e[i].size[1], bullet_e[i].fp);
-					bullet_e[i].pos[0] = enem[j].pos[0];
-					bullet_e[i].pos[1] = enem[j].pos[1] + enem[j].size[1]/2 + bullet_e[i].size[1]/2 + 5;
-					bullet_e[i].delta[0] = 0; bullet_e[i].delta[1] = 15;
-					bullet_e[i].speed = 2;
-					bullet_e[i].time = 0;
-					bullet_e[i].hit = 0;
-					Write_func(bullet_e[i]);
-				}
-			}
-		}
-	}
 	if (time % 10 == 0 && player.flag == 1) { //플레이어 총알
 		if (bul_num_p < 20) bul_num_p+=player.pow;
 		j = player.pow-1;
@@ -211,7 +192,33 @@ void Bullet_init(int time)
 			}
 		}
 	}
-	if (time % 50 == 0 && boss.flag == 1) { //보스 총알
+	if (time % 60 == 0) { //적 총알
+		for (j=0;j<enem_num;j++) {
+			if (bul_num_e < 50) bul_num_e++;
+			for (i = 0; i < bul_num_e; i++) {
+				if (bullet_e[i].flag == 0) {
+					bullet_e[i].flag = 1;
+					bullet_e[i].idx = 4;
+					bullet_e[i].move_flag = 1;
+					bullet_e[i].fp = bul02;
+					Lcd_Get_Info_BMP(&bullet_e[i].size[0], &bullet_e[i].size[1], bullet_e[i].fp);
+					bullet_e[i].pos[0] = enem[j].pos[0];
+					bullet_e[i].pos[1] = enem[j].pos[1] + enem[j].size[1]/2 + bullet_e[i].size[1]/2 + 5;
+					if (enem[j].fp == enemy_img[0]) {
+						bullet_e[i].delta[0] = (player.pos[0] - enem[j].pos[0])/10;
+						bullet_e[i].delta[1] = (player.pos[1] - enem[j].pos[1])/10;
+					}
+					else
+						bullet_e[i].delta[0] = 0; bullet_e[i].delta[1] = 15;
+					bullet_e[i].speed = 3;
+					bullet_e[i].time = 0;
+					bullet_e[i].hit = 0;
+					Write_func(bullet_e[i]);
+				}
+			}
+		}
+	}
+	if (time % freq_b == 0 && boss.flag == 1) { //보스 총알
 		if (bul_num_b < 50) bul_num_b+=boss.pow;
 		j = boss.pow -1;
 		for (i = 0; i < bul_num_b; i++) {
@@ -224,11 +231,11 @@ void Bullet_init(int time)
 				bullet_b[i].pos[0] = Pos2_x[j]; bullet_b[i].pos[1] = Pos2_y[j];
 				bullet_b[i].delta[1] = 15;
 				if (j == 0) bullet_b[i].delta[0] = 0;
-				else if (j == 1) bullet_b[i].delta[0] = -2;
-				else if (j == 2) bullet_b[i].delta[0] = 2;
-				else if (j == 3) {bullet_b[i].delta[0] = -3; bullet_b[i].delta[1] = 10;}
-				else if (j == 4) {bullet_b[i].delta[0] = 3; bullet_b[i].delta[1] = 10;}
-				bullet_b[i].speed = 2;
+				else if (j == 1) bullet_b[i].delta[0] = -3;
+				else if (j == 2) bullet_b[i].delta[0] = 3;
+				else if (j == 3) {bullet_b[i].delta[0] = -4; bullet_b[i].delta[1] = 10;}
+				else if (j == 4) {bullet_b[i].delta[0] = 4; bullet_b[i].delta[1] = 10;}
+				bullet_b[i].speed = 1;
 				bullet_b[i].time = 0;
 				bullet_b[i].hit = 0;
 				Write_func(bullet_b[i]);
@@ -240,9 +247,10 @@ void Bullet_init(int time)
 
 void Item_init(int time)
 {
-	int i,temp;
+	int i,temp,freq;
 
-	if (time % 80 == 0 && boss.flag == 0) {//아이템 등장 조건 조절
+	freq = boss.flag ? 80 : 100;
+	if (time % freq == 0) {//아이템 등장 조건 조절
 		if (item_num == 0) item_num++;
 		for (i=0;i<item_num;i++) {
 			temp = rand()%10 > 3 ? 1 : 0;

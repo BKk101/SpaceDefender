@@ -1,116 +1,193 @@
-#include "./minilibx/mlx.h"
+
+/***********************************************************/
+// 다음은 사용자 함수를 호출하는 루틴임 지우지 말것!
+/***********************************************************/
+
+#include "device_driver.h"
 #include <stdlib.h>
-#include <stdio.h>
-#include <math.h>
-#include <time.h>
-#include <unistd.h>
-#define WIDTH	320
-#define HEIGHT	240
-#define PI		3.141592
-#define ANGLE	PI/4.0
-#define G		9.81
-#define GREEN	0x0000FF00
-#define BLUE	0x000066FF
-#define RED		0x00FF0000
-#define WHITE	0xFFFFFFFF
-#define YELLOW	0x00888800
-#define MARGENTA 0x00aa00aa
-#define CYAN	0x0000FFFF
+#include <string.h>
+#include "2440addr.h"
+#define printf 	Uart_Printf
 
-int color[7]= {GREEN, BLUE, RED, YELLOW, MARGENTA, CYAN};
-typedef struct Object
+typedef struct
 {
-	unsigned short color;
-	int timer;
-	int pos[2];
-	int pos_old[2];
-	int pos_delt[2];
-	int size[2];
-	int speed_step;
-	int move_step;
-} Object;
+	int day;
+	int year;
+	int mon;
+	int date;
+	int hour;
+	int min;
+	int sec;
+}RTC_TIME;
 
-typedef struct vars
+void User_Main(void);
+
+void Main(void)
 {
-	void	*mlx;
-	void	*win;
-	void	*img;
-	clock_t	time;
-	int		obj_num;
-	int		pause;
-	Object	bullet[20];
-}	t_vars;
+	MMU_Init();
+	Led_Init();
+	Key_Poll_Init();
+	Uart_Init(115200);
+	Timer0_Init();
+	Timer3_Buzzer_Init();
+	Timer4_Init();
+	Lcd_Graphic_Init();
+	//Lcd_Clr_Screen(0xf800);
 
+	Uart_Printf("Welcome GBOX World!\n");
+	User_Main();
+	Uart_Printf("Good Bye~\n");
+}
 
-int render_next_frame(t_vars *vars)
+int RTC_Get_Time(void)
 {
-	int i;
-	long long a = clock();
-	if (vars->pause == 0) {
-		for (i=0;i<10;i++) {
-			vars->bullet[i].timer++;
-			if (vars->bullet[i].timer > 7) vars->bullet[i].pos_delt[1] = (double)rand()/RAND_MAX * 10 - 5;
-			if (vars->bullet[i].timer >= vars->bullet[i].speed_step) {
-				vars->bullet[i].timer = 0;
-				vars->bullet[i].pos_old[0] = vars->bullet[i].pos[0];
-				vars->bullet[i].pos_old[1] = vars->bullet[i].pos[1];
-				vars->bullet[i].pos[0] = vars->bullet[i].pos[0] + vars->bullet[i].pos_delt[0] * vars->bullet[i].move_step;
-				vars->bullet[i].pos[1] = vars->bullet[i].pos[1] + vars->bullet[i].pos_delt[1] * vars->bullet[i].move_step; 
-		
-				//mlx_pixel_put(vars->mlx,vars->win,vars->bullet[i].pos_old[0],vars->bullet[i].pos_old[1],0x00000000);
-				mlx_pixel_put(vars->mlx,vars->win,vars->bullet[i].pos[0],vars->bullet[i].pos[1],vars->bullet[i].color);
+	RTC_TIME a;
+
+	a.hour = (int)rBCDHOUR;
+	a.min = (int)rBCDMIN;
+	a.sec = (int)rBCDSEC;
+	return ((a.hour >> 4) & 0xf) * 10 + (a.hour & 0xf) * 360 + \
+		((a.min >> 4) & 0xf) * 10 + (a.min & 0xf) * 60 + \
+		((a.sec >> 4) & 0xf) * 10 + (a.sec & 0xf);
+}
+
+/*===== << 여기부터 사용자 프로그램을 작성함 >> =====*/
+
+#include "./main.h"
+
+Obj player;
+Obj boss;
+Obj enem[20];
+Obj bullet_p[20];
+Obj bullet_e[50];
+Obj bullet_b[50];
+Obj item[10];
+int map[240][320];
+int enem_num;
+int item_num;
+int bul_num_p;
+int bul_num_e;
+int bul_num_b;
+int Life;
+int last_pos;
+int Item_Lock;
+int Pos_x[5], Pos_y[5];
+int Pos2_x[5], Pos2_y[5];
+int zzz;
+int freq_b;
+int Boss_flag;
+
+void User_Main(void)
+{
+	int time;
+	int zz;
+	Lcd_Control_Brightness(5);
+
+Start_P:
+	Opening();
+	Var_init();
+	Player_init();
+	Timer0_Repeat(10);
+	time = 0;
+	zz = space2[1] - 240;
+	for (;;)
+	{
+		zzz = zz;
+		Pos_init();
+		if (Life <= 0) {Ending(0); goto Start_P;}
+		if (boss.flag == 1 && boss.life < 1) {Ending(1); goto Start_P;}
+		if (Timer0_Check_Expired()) {
+			if (time == 0xFFFFFFFF) time = 0;
+			time++;
+			Time_inc();
+			Boss_init(time);
+			Enemy_init(time);
+			Bullet_init(time);
+			Item_init(time);
+			Check_crush();
+			Move_player(zz);
+			Move_boss(time);
+			Move_obj();
+		}
+		Draw_obj();
+		Draw_boss();
+		Draw_player();
+		Draw_BackGround(0,zz,0,0,space2);
+		if (zz > 0) zz--;
+		if (zz <= 0) zz = space2[1] - 240;
+	}
+}
+
+void Check_crush()
+{
+	int i,idx;
+
+	if (boss.flag == 1) {
+		idx = Check_Range(boss.pos[0], boss.pos[1], boss.size[1]/2 + 5, bullet_p, bul_num_p); //플레이어 총알이 보스에 맞았는지 확인
+		if (idx != -1) {
+			boss.hit = 1;
+			bullet_p[idx].hit = 1;
+		}
+		Player_crush(boss, 3);
+	}
+	for (i=0;i<bul_num_e;i++) Player_crush(bullet_e[i], 2); //적총알이 플레이어에 맞았는지 확인
+	for (i=0;i<bul_num_b;i++) Player_crush(bullet_b[i], 2); //보스 총알이 플레이어에 맞았는지 확인
+	for (i=0;i<enem_num;i++) { //적이 플레이어 총알이나 본체에 맞았는지 확인
+		idx = Check_Range(enem[i].pos[0], enem[i].pos[1], enem[i].size[1]/2 + 6, bullet_p, bul_num_p);
+		if (idx != -1) {
+			enem[i].hit = 1;
+			bullet_p[idx].hit = 1;
+		}
+		Player_crush(enem[i], 3);
+	}
+	for (i=0;i<item_num;i++) { //아이템이 플레이어에 맞았는지 확인
+		idx = Check_Range(item[i].pos[0], item[i].pos[1], item[i].size[1]/2 + 5, &player, 1);
+		if (idx != -1) {
+			item[i].hit = 1;
+			if (item[i].idx == 5 && Item_Lock == 0)
+				player.pow = 3;
+			else if (item[i].idx == 6 && Item_Lock == 0)
+				if (Life < 6) Life++;
+			Item_Lock = 1;
+		}
+	}
+}
+
+int Check_Range(int x, int y, int range, Obj *obj, int num)
+{
+	int i,j,k;
+	int xx,yy;
+
+	for (i=0;i<num;i++) {
+		for (j=-range;j<=range;j++) {
+			for (k=-range;k<=range;k++) {
+				if (map[y+j][x+k] == (obj+i)->idx) {
+					xx = x+k; yy = y+j;
+					if ((abs(xx-(obj+i)->pos[0]) < (obj+i)->size[0]+1) && (abs(yy-(obj+i)->pos[1]) < (obj+i)->size[1]+1))
+						return i;
+				}
 			}
 		}
 	}
-	return 0;
+	return -1;
 }
 
-int	keyboard(int keycode, t_vars *vars)
+void Player_crush(Obj obj, int range)
 {
-	printf("key pressed\n");
-	if (keycode == 53) {
-		mlx_destroy_window(vars->mlx,vars->win);
-		exit(0);
-	}
-	if (keycode == 49) {
-		vars->pause = vars->pause ? 0 : 1;
-	}
-	return 0;
-}
+	int idx;
 
-void make_bullet(t_vars *vars)
-{
-	int i;
-	for (i=0;i<10;i++) {
-		vars->bullet[i].color = color[i%6];
-		vars->bullet[i].pos[0] = i/5 ? 320:0;
-		vars->bullet[i].pos[1] = rand() % 200;
-		vars->bullet[i].pos_delt[0] = i/5 ? -1 : 1;
-		vars->bullet[i].pos_delt[1] = (double)rand()/RAND_MAX * 10 - 5;
-		vars->bullet[i].size[0] = 5;
-		vars->bullet[i].size[1] = 5;
-		vars->bullet[i].timer = 0;
-		vars->bullet[i].speed_step = rand()%10 +1;
-		vars->bullet[i].move_step = rand()%5 + 1;
-		printf("%d  x: %d y: %d\n", i, vars->bullet[i].pos[0], vars->bullet[i].pos[1]);
+	idx = Check_Range(obj.pos[0], obj.pos[1], obj.size[1]/2 + range, &player, 1);
+	if (idx != -1) {
+		obj.hit = 1;
+		Player_hit();
 	}
 }
 
-int main(void)
+void Player_hit()
 {
-	t_vars	vars;
-	srand((unsigned int)time(0));
-	int wid = 50;
-	int hei = 50;
-	vars.mlx = mlx_init();
-	vars.win = mlx_new_window(vars.mlx,WIDTH,HEIGHT,"new");
-	vars.time = 0;
-	vars.pause = 0;
-	vars.img = mlx_new_image(vars.mlx, WIDTH, HEIGHT);
-	make_bullet(&vars);
-	mlx_hook(vars.win, 2, 0, keyboard, &vars);
-	mlx_loop_hook(vars.mlx, render_next_frame, &vars);
-	mlx_loop(vars.mlx);
-	//a
-	return 0;
-}	
+	player.hit = 1;
+	Lcd_Draw_Bar(0,0,WIDTH,20,0x1);
+	if (Life > 0 && player.flag == 1) Life--;
+}
+
+

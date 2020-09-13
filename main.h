@@ -63,6 +63,7 @@ void Draw_player();
 void Draw_boss();
 void Draw_obj();
 void Draw_func(Obj obj[], int *obj_num);
+void Erase_obj(Obj obj, int z);
 
 void Move_boss(int time);
 void Move_player();
@@ -70,7 +71,7 @@ void Move_obj();
 void Move_func(Obj obj[], int *obj_num);
 void Write_func(Obj obj);
 void Clear_func(Obj obj);
-void Erase_obj(Obj obj, int z);
+void Del_obj(Obj obj[], int i, int *obj_num);
 
 void Check_crush();
 void Player_hit();
@@ -102,5 +103,7 @@ extern int Item_Lock;
 extern int Pos_x[5], Pos_y[5];
 extern int Pos2_x[5], Pos2_y[5];
 extern int zzz;
+extern int freq_b;
+extern int Boss_flag;
 
 #endif /* MAIN_H_ */
