@@ -171,7 +171,7 @@ void Bullet_init(int time)
 {
 	int i,j;
 
-	if (time % 10 == 0 && player.flag == 1) { //í”Œë ˆì´ì–´ ì´ì•Œ
+	if (time % 10 == 0 && player.flag == 1) { //ÇÃ·¹ÀÌ¾î ÃÑ¾Ë
 		if (bul_num_p < 20) bul_num_p+=player.pow;
 		j = player.pow-1;
 		for (i = 0; i < bul_num_p; i++) {
@@ -192,7 +192,7 @@ void Bullet_init(int time)
 			}
 		}
 	}
-	if (time % 60 == 0) { //ì  ì´ì•Œ
+	if (time % 60 == 0) { //Àû ÃÑ¾Ë
 		for (j=0;j<enem_num;j++) {
 			if (bul_num_e < 50) bul_num_e++;
 			for (i = 0; i < bul_num_e; i++) {
@@ -218,7 +218,7 @@ void Bullet_init(int time)
 			}
 		}
 	}
-	if (time % freq_b == 0 && boss.flag == 1) { //ë³´ìŠ¤ ì´ì•Œ
+	if (time % freq_b == 0 && boss.flag == 1) { //º¸½º ÃÑ¾Ë
 		if (bul_num_b < 50) bul_num_b+=boss.pow;
 		j = boss.pow -1;
 		for (i = 0; i < bul_num_b; i++) {
@@ -250,7 +250,7 @@ void Item_init(int time)
 	int i,temp,freq;
 
 	freq = boss.flag ? 80 : 100;
-	if (time % freq == 0) {//ì•„ì´í…œ ë“±ì¥ ì¡°ê±´ ì¡°ì ˆ
+	if (time % freq == 0) {//¾ÆÀÌÅÛ µîÀå Á¶°Ç Á¶Àı
 		if (item_num == 0) item_num++;
 		for (i=0;i<item_num;i++) {
 			temp = rand()%10 > 3 ? 1 : 0;

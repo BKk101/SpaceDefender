@@ -76,7 +76,7 @@ void Move_func(Obj obj[], int *obj_num)
 			Clear_func(obj[i]);
 			obj[i].pos[0] += obj[i].delta[0]; obj[i].pos[1] += obj[i].delta[1];
 			if ((obj[i].pos[0] < 0 || obj[i].pos[0] >= WIDTH) || (obj[i].pos[1] < 10 || obj[i].pos[1] >= HEIGHT)) {
-				//yê²½ê³„ê°’ ì  ìƒì„±ìœ„ì¹˜ì— ë”°ë¼ ë¬¸ì œë  ìˆ˜ ìžˆìŒ
+				//y°æ°è°ª Àû »ý¼ºÀ§Ä¡¿¡ µû¶ó ¹®Á¦µÉ ¼ö ÀÖÀ½
 				temp = i;
 				continue;
 			}

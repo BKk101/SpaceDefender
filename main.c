@@ -1,6 +1,6 @@
 
 /***********************************************************/
-// ë‹¤ìŒì€ ì‚¬ìš©ì í•¨ìˆ˜ë¥¼ í˜¸ì¶œí•˜ëŠ” ë£¨í‹´ì„ ì§€ìš°ì§€ ë§ê²ƒ!
+// ´ÙÀ½Àº »ç¿ëÀÚ ÇÔ¼ö¸¦ È£ÃâÇÏ´Â ·çÆ¾ÀÓ Áö¿ìÁö ¸»°Í!
 /***********************************************************/
 
 #include "device_driver.h"
@@ -51,7 +51,7 @@ int RTC_Get_Time(void)
 		((a.sec >> 4) & 0xf) * 10 + (a.sec & 0xf);
 }
 
-/*===== << ì—¬ê¸°ë¶€í„° ì‚¬ìš©ì í”„ë¡œê·¸ë¨ì„ ì‘ì„±í•¨ >> =====*/
+/*===== << ¿©±âºÎÅÍ »ç¿ëÀÚ ÇÁ·Î±×·¥À» ÀÛ¼ºÇÔ >> =====*/
 
 #include "./main.h"
 
@@ -123,16 +123,16 @@ void Check_crush()
 	int i,idx;
 
 	if (boss.flag == 1) {
-		idx = Check_Range(boss.pos[0], boss.pos[1], boss.size[1]/2 + 5, bullet_p, bul_num_p); //í”Œë ˆì´ì–´ ì´ì•Œì´ ë³´ìŠ¤ì— ë§ì•˜ëŠ”ì§€ í™•ì¸
+		idx = Check_Range(boss.pos[0], boss.pos[1], boss.size[1]/2 + 5, bullet_p, bul_num_p); //ÇÃ·¹ÀÌ¾î ÃÑ¾ËÀÌ º¸½º¿¡ ¸Â¾Ò´ÂÁö È®ÀÎ
 		if (idx != -1) {
 			boss.hit = 1;
 			bullet_p[idx].hit = 1;
 		}
 		Player_crush(boss, 3);
 	}
-	for (i=0;i<bul_num_e;i++) Player_crush(bullet_e[i], 2); //ì ì´ì•Œì´ í”Œë ˆì´ì–´ì— ë§ì•˜ëŠ”ì§€ í™•ì¸
-	for (i=0;i<bul_num_b;i++) Player_crush(bullet_b[i], 2); //ë³´ìŠ¤ ì´ì•Œì´ í”Œë ˆì´ì–´ì— ë§ì•˜ëŠ”ì§€ í™•ì¸
-	for (i=0;i<enem_num;i++) { //ì ì´ í”Œë ˆì´ì–´ ì´ì•Œì´ë‚˜ ë³¸ì²´ì— ë§ì•˜ëŠ”ì§€ í™•ì¸
+	for (i=0;i<bul_num_e;i++) Player_crush(bullet_e[i], 2); //ÀûÃÑ¾ËÀÌ ÇÃ·¹ÀÌ¾î¿¡ ¸Â¾Ò´ÂÁö È®ÀÎ
+	for (i=0;i<bul_num_b;i++) Player_crush(bullet_b[i], 2); //º¸½º ÃÑ¾ËÀÌ ÇÃ·¹ÀÌ¾î¿¡ ¸Â¾Ò´ÂÁö È®ÀÎ
+	for (i=0;i<enem_num;i++) { //ÀûÀÌ ÇÃ·¹ÀÌ¾î ÃÑ¾ËÀÌ³ª º»Ã¼¿¡ ¸Â¾Ò´ÂÁö È®ÀÎ
 		idx = Check_Range(enem[i].pos[0], enem[i].pos[1], enem[i].size[1]/2 + 6, bullet_p, bul_num_p);
 		if (idx != -1) {
 			enem[i].hit = 1;
@@ -140,7 +140,7 @@ void Check_crush()
 		}
 		Player_crush(enem[i], 3);
 	}
-	for (i=0;i<item_num;i++) { //ì•„ì´í…œì´ í”Œë ˆì´ì–´ì— ë§ì•˜ëŠ”ì§€ í™•ì¸
+	for (i=0;i<item_num;i++) { //¾ÆÀÌÅÛÀÌ ÇÃ·¹ÀÌ¾î¿¡ ¸Â¾Ò´ÂÁö È®ÀÎ
 		idx = Check_Range(item[i].pos[0], item[i].pos[1], item[i].size[1]/2 + 5, &player, 1);
 		if (idx != -1) {
 			item[i].hit = 1;

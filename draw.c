@@ -53,12 +53,12 @@ void Draw_player()
 		Lcd_Draw_BMP2(player.pos[0] - player.size[0]/2, player.pos[1] - player.size[1]/2, player.fp);
 		player.move_flag = 0;
 	}
-	else { //í”Œë ˆì´ì–´ ë¹„í–‰ê¸° ì´ì•Œì— ë§ì•˜ì„ ë•Œ í­ë°œíš¨ê³¼ í‘œí˜„
+	else { //ÇÃ·¹ÀÌ¾î ºñÇà±â ÃÑ¾Ë¿¡ ¸Â¾ÒÀ» ¶§ Æø¹ßÈ¿°ú Ç¥Çö
 		++time;
 		Lcd_Draw_BMP2(player.pos[0] - player.size[0]/2, player.pos[1] - player.size[1]/2, player.fp);
 		for (i=0;i<3;i++) Lcd_Draw_BMP2(player.pos[0]-15, player.pos[1]-15, expld[i]);
 		for (i=0;i<3;i++) Lcd_Draw_BMP2(player.pos[0]+5, player.pos[1]+5, expld[i]);
-		Clear_func(player); //ê¹œë¹¡ì„ í‘œí˜„
+		Clear_func(player); //±ôºıÀÓ Ç¥Çö
 		if (time > 8) {
 			time = 0;
 			Player_init();
@@ -108,20 +108,20 @@ void Draw_func(Obj obj[], int *obj_num)
 
 	num = *obj_num;
 	for (i=0;i<num;i++) {
-		if (obj[i].hit == 1) {//ë¬¼ì²´ê°€ ë§ì€ê²½ìš°
+		if (obj[i].hit == 1) {//¹°Ã¼°¡ ¸ÂÀº°æ¿ì
 			Clear_func(obj[i]);
-			if (obj[i].idx == 3) { //ì  ë¹„í–‰ê¸°ê°€ ì´ì•Œì— ë§ì•˜ì„ ë•Œ í­ë°œíš¨ê³¼ í‘œí˜„
+			if (obj[i].idx == 3) { //Àû ºñÇà±â°¡ ÃÑ¾Ë¿¡ ¸Â¾ÒÀ» ¶§ Æø¹ßÈ¿°ú Ç¥Çö
 				++time;
 				for (j=0;j<3;j++) Lcd_Draw_BMP2(obj[i].pos[0]-7, obj[i].pos[1]-7, expld[j]);
 				if (time > 5) {
 					Del_obj(obj, i, obj_num); obj[i].hit = 0; time = 0;
 				}
 			}
-			else { //ì  ë¹„í–‰ê¸° ì´ì™¸ì˜ ë¬¼ì²´
+			else { //Àû ºñÇà±â ÀÌ¿ÜÀÇ ¹°Ã¼
 				Del_obj(obj, i, obj_num); obj[i].hit = 0;
 			}
 		}
-		if ((obj[i].flag == 1) && (obj[i].move_flag == 1)) { //ë§ì§€ ì•Šì€ ê²½ìš°
+		if ((obj[i].flag == 1) && (obj[i].move_flag == 1)) { //¸ÂÁö ¾ÊÀº °æ¿ì
 			Erase_obj(obj[i], zzz);
 			obj[i].move_flag = 0;
 			Lcd_Draw_BMP2(obj[i].pos[0] - obj[i].size[0]/2, obj[i].pos[1] - obj[i].size[1]/2, obj[i].fp);
